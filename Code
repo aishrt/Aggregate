@@ -1,0 +1,89 @@
+const getProfile = catchAsync(async (req, res) => {
+  try {
+    console.log(getProfile, "getProfile");
+    const userId = req.params.id;
+    const userDetail = await User.aggregate([
+      {
+        $match: {
+          _id: mongoose.Types.ObjectId(userId),
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          image: 1,
+          first_name: 1,
+          last_name: 1,
+          address: 1,
+          phone_number: 1,
+          email: 1,
+          role: 1,
+        },
+      },
+    ]);
+
+    if (userDetail.length === 0) {
+      return res.status(404).json({
+        status: "404",
+        message: "User not found!",
+      });
+    }
+
+    // Extract the first element from the array
+    const userDetailData = userDetail[0];
+
+    return res.status(200).json({
+      status: "200",
+      message: "User data fetched successfully!",
+      data: userDetailData,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      status: "500",
+      message: "An error occurred while fetcihng user data !",
+      error: error.message,
+    });
+  }
+});
+
+
+
+---------------------------------------------------------
+
+
+const marksList = catchAsync(async (req, res) => {
+  const identity = req.params.id;
+  const result = await Marks.aggregate([
+    {
+      $match: {
+        userId: mongoose.Types.ObjectId(identity),
+      },
+    },
+    {
+      $project: {
+        userId: 1,
+        maths: 1,
+        science: 1,
+        sst: 1,
+        english: 1,
+        hindi: 1,
+        total: {
+          $add: ["$maths", "$science", "$sst", "$english", "$hindi"],
+        },
+      },
+    },
+  ]);
+
+  if (result) {
+    const singleData = result?.[0];
+    return res.status(200).json({
+      status: 200,
+      message: "Marks list fetched successfully",
+      data: singleData,
+    });
+  }
+  return res.status(401).json({
+    status: 401,
+    message: "Marks list empty",
+  });
+});
